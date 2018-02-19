@@ -1,9 +1,6 @@
-QT += widgets
-qtHaveModule(printsupport): QT += printsupport
+include(src/src.pri)
 
-HEADERS       = mainwindow.h \
-                scribblearea.h
-SOURCES       = main.cpp \
-                mainwindow.cpp \
-                scribblearea.cpp
-
+DISTFILES += \
+    .travis.yml \
+    appveyor.yml \
+    README.md
