@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>guide.png</file>
+        <file>onoie.png</file>
+    </qresource>
+</RCC>
