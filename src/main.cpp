@@ -4,7 +4,7 @@
 #include <QApplication>
 
 int main(int argc, char *argv[]){
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
 
     Q_INIT_RESOURCE(resource);
@@ -12,5 +12,5 @@ int main(int argc, char *argv[]){
     MWindow w;
     w.show();
 
-    return a.exec();
+    return app.exec();
 }

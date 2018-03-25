@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>guide.png</file>
         <file>onoie.png</file>
+        <file>TransAssist.gif</file>
     </qresource>
 </RCC>

@@ -7,6 +7,8 @@
 #include <QDateTime>
 #include <QAction>
 #include <QPushButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QMessageBox>
 #include <QDir>
 
@@ -33,6 +35,23 @@ public:
         }
         return dir;
     }
+    static QWidget* createBoxWidget(QBoxLayout* boxLayout){
+        QWidget* w =new QWidget();
+        w->setLayout(boxLayout);
+        return w;
+    }
+    static QHBoxLayout* createHLayout(){
+        QHBoxLayout *hl = new QHBoxLayout();
+        hl->setSpacing(0);
+        hl->setMargin(0);
+        return hl;
+    }
+    static QVBoxLayout* createVLayout(){
+        QVBoxLayout *vl = new QVBoxLayout();
+        vl->setSpacing(0);
+        vl->setMargin(0);
+        return vl;
+    }
     //QObjectConnectHelper
     static QMetaObject::Connection fowardConnect(const QObject *sender, const char *signal,const QObject *receiver, const char *member, Qt::ConnectionType = Qt::AutoConnection){
         return QObject::connect(sender,signal,receiver,member);
@@ -52,6 +71,12 @@ public:
         //createSlotAction(tr("SlotAction"),qApp, SLOT(quit()));
         QAction* act = new QAction(actText);
         connect(act, SIGNAL(triggered()),receiver,member);
+        return act;
+    }
+    template<typename Functor>
+    static QAction* createLambdaIconAction(QIcon icon,const QString actText,Functor f){
+        QAction* act = new QAction(icon,actText);
+        connect(act,&QAction::triggered,f);
         return act;
     }
     template<typename Functor>

@@ -25,19 +25,52 @@ public:
     MWindow(QWidget *parent = 0):QMainWindow(parent){
         scribbleArea = new ScribbleArea(this);
 
-        setMaximumWidth(800);
-        setMaximumHeight(600);
-        resize(this->maximumWidth(),this->maximumHeight());
+        setMaximumWidth(1000);
+        setMaximumHeight(650);
+        //resize(this->maximumWidth(),this->maximumHeight());
+
+        QToolBar *lambdaBar = new QToolBar(tr("LambdaBar"));
+        lambdaBar->setAllowedAreas(Qt::AllToolBarAreas);
+        lambdaBar->addAction(Slib::createLambdaAction("InsertFrameAfter",[=]{
+            scribbleArea->insertFrameAfter();
+        }));
+        lambdaBar->addAction(Slib::createTestAction());
+        lambdaBar->addAction(Slib::createSlotAction("ScribbleAreaTest",scribbleArea,SLOT(test())));
+        addToolBar(Qt::TopToolBarArea,lambdaBar);
+
+        QToolBar *toolBar = new QToolBar(tr("Tool"));
+        toolBar->setAllowedAreas(Qt::AllToolBarAreas);
+        toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
+            qDebug()<<"ToolFunction";
+        }));
+        addToolBar(Qt::RightToolBarArea,toolBar);
+
+        QDockWidget *dw = new QDockWidget(tr("Dock"));
+        dw->setMinimumWidth(200);
+        dw->setAllowedAreas(Qt::AllDockWidgetAreas);
+        QVBoxLayout *dwvl = Slib::createVLayout();
+        dwvl->addWidget(Slib::createLambdaActionButton("Test",[=]{
+            qDebug()<<"LambdaFunction";
+        }));
+        dw->setWidget(Slib::createBoxWidget(dwvl));
+        addDockWidget(Qt::LeftDockWidgetArea,dw);
+
+        QDockWidget *pw = new QDockWidget(tr("Prev"));
+        pw->setMinimumWidth(200);
+        pw->setAllowedAreas(Qt::AllDockWidgetAreas);
+        QVBoxLayout *pwvl = Slib::createVLayout();
+        pwvl->addWidget(Slib::createLambdaActionButton("Test",[=]{
+            qDebug()<<"LambdaFunction";
+        }));
+        pw->setWidget(Slib::createBoxWidget(pwvl));
+        addDockWidget(Qt::LeftDockWidgetArea,pw);
 
         QWidget *cw = new QWidget();
         setCentralWidget(cw);
-        QHBoxLayout *hl = new QHBoxLayout();
-        hl->setSpacing(0);
-        hl->setMargin(0);
+        QHBoxLayout *hl = Slib::createHLayout();
         cw->setLayout(hl);
-        QVBoxLayout *vl = new QVBoxLayout();
-        hl->addLayout(vl);vl->setSpacing(0);
-        vl->setMargin(0);
+        QVBoxLayout *vl = Slib::createVLayout();
+        hl->addLayout(vl);
         vl->addWidget(scribbleArea);
 
         createMenus();
@@ -292,7 +325,8 @@ private:
     void createStatusBar(){
         QStatusBar *statusbar = new QStatusBar(this);
         statusText = new QLabel();
-        statusbar->addWidget(statusText);
+        statusText->setAlignment(Qt::AlignRight);
+        statusbar->addWidget(statusText,1);
         this->setStatusBar(statusbar);
     }
     bool maybeSave(){
@@ -386,18 +420,9 @@ private:
         connect(clearScreenAct, SIGNAL(triggered()),scribbleArea, SLOT(clearImage()));
         optionMenu->addAction(clearScreenAct);
 
-        //HelpMenu
-        QMenu *helpMenu = new QMenu(tr("&Help"), this);
-        helpMenu->addAction(Slib::createSlotAction("ScribbleAreaTest",scribbleArea,SLOT(test())));
-        helpMenu->addAction(Slib::createTestAction());
-        menuBar()->addMenu(helpMenu);
-
         //LambdaMenu
         QMenu *lambdaMenu = new QMenu(tr("&Lambda"), this);
         menuBar()->addMenu(lambdaMenu);
-        lambdaMenu->addAction(Slib::createLambdaAction("InsertFrameAfter",[=]{
-            scribbleArea->insertFrameAfter();
-        }));
         lambdaMenu->addAction(Slib::createLambdaAction("OnionSkinPlus",[=]{
             scribbleArea->setOnionSkinCountPlus();
         }));
@@ -439,10 +464,27 @@ private:
             }
         }));
 
-
         //ShortcutMenu
         QMenu *shortcutMenu = new QMenu(tr("&Shortcut"), this);
         menuBar()->addMenu(shortcutMenu);
+        //T
+        QAction *tAct = new QAction(tr("&TKeyAction [PrimaryTool]"));
+        tAct->setShortcut(tr("T"));
+        shortcutMenu->addAction(tAct);
+        connect(tAct,SIGNAL(triggered(bool)),this,SLOT(usePrimary()));
+        //R
+        QAction *rAct = new QAction(tr("&RKeyAction [SecondaryTool]"));
+        rAct->setShortcut(tr("R"));
+        shortcutMenu->addAction(rAct);
+        connect(rAct,SIGNAL(triggered(bool)),this,SLOT(useSecondary()));
+        //E
+        QAction *eAct = new QAction(tr("&EKeyAction [TertiaryTool]"));
+        eAct->setShortcut(tr("E"));
+        shortcutMenu->addAction(eAct);
+        connect(eAct,SIGNAL(triggered(bool)),this,SLOT(useTertiary()));
+
+        menuBar()->addSeparator();
+
         //Q
         QAction *qAct = Slib::createLambdaAction(tr("&QKeyAction[Add Frame]"),[=]{
             scribbleArea->addFrame();
@@ -484,21 +526,6 @@ private:
         //ProfileMenu
         QMenu *profileMenu = new QMenu(tr("&Profile"), this);
         menuBar()->addMenu(profileMenu);
-        //T
-        QAction *tAct = new QAction(tr("&TKeyAction [PrimaryTool]"));
-        tAct->setShortcut(tr("T"));
-        profileMenu->addAction(tAct);
-        connect(tAct,SIGNAL(triggered(bool)),this,SLOT(usePrimary()));
-        //R
-        QAction *rAct = new QAction(tr("&RKeyAction [SecondaryTool]"));
-        rAct->setShortcut(tr("R"));
-        profileMenu->addAction(rAct);
-        connect(rAct,SIGNAL(triggered(bool)),this,SLOT(useSecondary()));
-        //E
-        QAction *eAct = new QAction(tr("&EKeyAction [TertiaryTool]"));
-        eAct->setShortcut(tr("E"));
-        profileMenu->addAction(eAct);
-        connect(eAct,SIGNAL(triggered(bool)),this,SLOT(useTertiary()));
         //1
         QAction *act1 = Slib::createLambdaAction(tr("&Profile No.1"),[=]{
             updateStatusText("setProfile:1");
@@ -539,6 +566,12 @@ private:
         act0->setShortcut(Qt::Key_0);
         profileMenu->addAction(act0);
         connect(act0,SIGNAL(triggered(bool)),this,SLOT(useDefaultTool()));
+
+        //HelpMenu
+        QMenu *helpMenu = new QMenu(tr("&Help"), this);
+        QAction *aboutQtAct = helpMenu->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
+        aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
+        menuBar()->addMenu(helpMenu);
     }
 protected:
     void closeEvent(QCloseEvent *event) override{
