@@ -4,6 +4,9 @@
 #include "slib.h"
 #include "scribblearea.h"
 #include "image.h"
+#include "info.h"
+#include "layout.h"
+#include "preview.h"
 
 #include <QDebug>
 #include <QMenu>
@@ -25,56 +28,14 @@ public:
     MWindow(QWidget *parent = 0):QMainWindow(parent){
         scribbleArea = new ScribbleArea(this);
 
-        setMaximumWidth(1000);
-        setMaximumHeight(650);
+        setMaximumWidth(1200);
+        setMaximumHeight(700);
         //resize(this->maximumWidth(),this->maximumHeight());
 
-        QToolBar *lambdaBar = new QToolBar(tr("LambdaBar"));
-        lambdaBar->setAllowedAreas(Qt::AllToolBarAreas);
-        lambdaBar->addAction(Slib::createLambdaAction("InsertFrameAfter",[=]{
-            scribbleArea->insertFrameAfter();
-        }));
-        lambdaBar->addAction(Slib::createTestAction());
-        lambdaBar->addAction(Slib::createSlotAction("ScribbleAreaTest",scribbleArea,SLOT(test())));
-        addToolBar(Qt::TopToolBarArea,lambdaBar);
-
-        QToolBar *toolBar = new QToolBar(tr("Tool"));
-        toolBar->setAllowedAreas(Qt::AllToolBarAreas);
-        toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
-            qDebug()<<"ToolFunction";
-        }));
-        addToolBar(Qt::RightToolBarArea,toolBar);
-
-        QDockWidget *dw = new QDockWidget(tr("Dock"));
-        dw->setMinimumWidth(200);
-        dw->setAllowedAreas(Qt::AllDockWidgetAreas);
-        QVBoxLayout *dwvl = Slib::createVLayout();
-        dwvl->addWidget(Slib::createLambdaActionButton("Test",[=]{
-            qDebug()<<"LambdaFunction";
-        }));
-        dw->setWidget(Slib::createBoxWidget(dwvl));
-        addDockWidget(Qt::LeftDockWidgetArea,dw);
-
-        QDockWidget *pw = new QDockWidget(tr("Prev"));
-        pw->setMinimumWidth(200);
-        pw->setAllowedAreas(Qt::AllDockWidgetAreas);
-        QVBoxLayout *pwvl = Slib::createVLayout();
-        pwvl->addWidget(Slib::createLambdaActionButton("Test",[=]{
-            qDebug()<<"LambdaFunction";
-        }));
-        pw->setWidget(Slib::createBoxWidget(pwvl));
-        addDockWidget(Qt::LeftDockWidgetArea,pw);
-
-        QWidget *cw = new QWidget();
-        setCentralWidget(cw);
-        QHBoxLayout *hl = Slib::createHLayout();
-        cw->setLayout(hl);
-        QVBoxLayout *vl = Slib::createVLayout();
-        hl->addLayout(vl);
-        vl->addWidget(scribbleArea);
-
+        createWidget();
         createMenus();
         createStatusBar();
+
         QObject::connect(
             scribbleArea,SIGNAL(updateStatusbarSignal(QString)),
             this,SLOT(updateStatusText(QString))
@@ -357,6 +318,66 @@ private:
         } else {
             return scribbleArea->saveImage(fileName, fileFormat.constData());
         }
+    }
+    void createWidget(){
+        QDockWidget *pw = Slib::createDockWidget(tr("Preview"));
+        pw->setMaximumWidth(200);
+        pw->setMaximumHeight(130);
+        Preview* prev = new Preview();
+        pw->setWidget(prev);
+        addDockWidget(Qt::LeftDockWidgetArea,pw);
+
+        QDockWidget *tw = Slib::createDockWidget(tr("Information"));
+        tw->setMaximumWidth(200);
+        tw->setMaximumHeight(200);
+        Info* info = new Info();
+        tw->setWidget(info);
+        addDockWidget(Qt::LeftDockWidgetArea,tw);
+
+        QDockWidget *dw = Slib::createDockWidget(tr("Dock"));
+        dw->setMinimumWidth(200);
+        QVBoxLayout *dwvl = Slib::createVLayout();
+        dwvl->addStretch();
+        dwvl->addWidget(Slib::createTestButton());
+        dwvl->addWidget(
+            Slib::createSlotActionButton(
+                "ScribbleAreaTestAction",
+                scribbleArea,SLOT(test())
+            )
+        );
+        dwvl->addStretch();
+        dw->setWidget(Slib::createBoxWidget(dwvl));
+        addDockWidget(Qt::LeftDockWidgetArea,dw);
+
+        QToolBar *toolBar =Slib::createToolBar(tr("Tool"));
+        toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
+            qDebug()<<"ToolFunction";
+        }));
+        addToolBar(Qt::RightToolBarArea,toolBar);
+
+        QToolBar *quickBar =Slib::createToolBar(tr("Quick"));
+        quickBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
+            qDebug()<<"QuickFunction";
+        }));
+        addToolBar(Qt::TopToolBarArea,quickBar);
+
+        QToolBar *lambdaBar =Slib::createToolBar(tr("LambdaBar"));
+        lambdaBar->addAction(Slib::createLambdaAction("InsertFrameAfter",[=]{
+            scribbleArea->insertFrameAfter();
+        }));
+        addToolBar(Qt::TopToolBarArea,lambdaBar);
+
+        QToolBar *console =Slib::createToolBar(tr("Console"));
+        console->addWidget(new QLineEdit());
+        addToolBar(Qt::TopToolBarArea,console);
+
+        QWidget *cw = new QWidget();
+        setCentralWidget(cw);
+        QHBoxLayout *hl = Slib::createHLayout();
+        cw->setLayout(hl);
+        QVBoxLayout *vl = Slib::createVLayout();
+        hl->addLayout(vl);
+        vl->addWidget(scribbleArea);
     }
     void createMenus(){
         //FileMenu

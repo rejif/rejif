@@ -11,7 +11,10 @@
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QDir>
-
+#include <QLabel>
+#include <QFontDatabase>
+#include <QToolBar>
+#include <QDockWidget>
 class Slib : public QObject{
     Q_OBJECT
 public:
@@ -34,6 +37,33 @@ public:
             }
         }
         return dir;
+    }
+    static QLabel* createLabel(QString str){
+        QLabel *label = new QLabel("<div style=\"text-align:center;\">"+str+"</div>");
+        label->setTextFormat(Qt::RichText);
+        label->setTextInteractionFlags(Qt::TextBrowserInteraction);
+        QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+        font.setPointSize(10);
+        label->setFont(font);
+        label->setOpenExternalLinks(true);
+        label->setStyleSheet(
+            "QLabel{"
+                "color: rgba(255,255,255,100%);"
+                "background-color: rgba(34,34,34,0.8);"
+                "padding:3px 5px;"
+            "}"
+        );
+        return label;
+    }
+    static QDockWidget* createDockWidget(const QString &title, QWidget *parent = Q_NULLPTR,Qt::WindowFlags flags = Qt::WindowFlags()){
+        QDockWidget *dw = new QDockWidget(title,parent,flags);
+        dw->setAllowedAreas(Qt::AllDockWidgetAreas);
+        return dw;
+    }
+    static QToolBar* createToolBar(const QString &title, QWidget *parent = Q_NULLPTR){
+        QToolBar *toolBar = new QToolBar(title,parent);
+        toolBar->setAllowedAreas(Qt::AllToolBarAreas);
+        return toolBar;
     }
     static QWidget* createBoxWidget(QBoxLayout* boxLayout){
         QWidget* w =new QWidget();
@@ -72,6 +102,14 @@ public:
         QAction* act = new QAction(actText);
         connect(act, SIGNAL(triggered()),receiver,member);
         return act;
+    }
+    static QPushButton* createSlotActionButton(const QString btnText,const QObject *receiver, const char *member, Qt::ConnectionType = Qt::AutoConnection){
+        return createActionButton(btnText,createSlotAction("SlotAction",receiver,member));
+    }
+    static QPushButton* createActionButton(const QString btnText,QAction* act){
+        QPushButton *btn = new QPushButton(btnText);
+        QObject::connect(btn,SIGNAL(clicked(bool)),act,SLOT(trigger()));
+        return btn;
     }
     template<typename Functor>
     static QAction* createLambdaIconAction(QIcon icon,const QString actText,Functor f){

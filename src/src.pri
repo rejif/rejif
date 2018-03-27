@@ -12,7 +12,10 @@ HEADERS += \
     $$PWD/mwindow.h \
     $$PWD/scribblearea.h \
     $$PWD/slib.h \
-    $$PWD/image.h
+    $$PWD/image.h \
+    $$PWD/info.h \
+    $$PWD/layout.h \
+    $$PWD/preview.h
 
 SOURCES += \
     $$PWD/main.cpp
