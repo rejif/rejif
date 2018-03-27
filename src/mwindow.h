@@ -138,11 +138,9 @@ public slots:
     }
 private slots:
     void open(){
-        if (maybeSave()) {
-            QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"), QDir::currentPath());
-            if (!fileName.isEmpty()){
-                scribbleArea->loadImage(fileName);
-            }
+        QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"), QDir::currentPath());
+        if (!fileName.isEmpty()){
+            scribbleArea->loadImage(fileName);
         }
     }
     void save(){
@@ -232,7 +230,6 @@ private:
                         layer++;
                     }
                 }
-                scribbleArea->editing();
                 scribbleArea->createOnionSkin();
                 scribbleArea->update();
             }else{
@@ -289,22 +286,6 @@ private:
         statusText->setAlignment(Qt::AlignRight);
         statusbar->addWidget(statusText,1);
         this->setStatusBar(statusbar);
-    }
-    bool maybeSave(){
-        if (scribbleArea->isEdit()) {
-            QMessageBox::StandardButton ret;
-            ret = QMessageBox::warning(this,
-               tr("Scribble"),
-               tr("The image has been modified.\n"
-                  "Do you want to save your changes?"),
-               QMessageBox::Save | QMessageBox::Discard| QMessageBox::Cancel);
-            if (ret == QMessageBox::Save) {
-                return saveFile("png");
-            } else if (ret == QMessageBox::Cancel) {
-                return false;
-            }
-        }
-        return true;
     }
     bool saveFile(const QByteArray &fileFormat){
         QString fileName = QFileDialog::getSaveFileName(this,
@@ -596,11 +577,7 @@ private:
     }
 protected:
     void closeEvent(QCloseEvent *event) override{
-        if (maybeSave()) {
-            event->accept();
-        } else {
-            event->ignore();
-        }
+        event->accept();//->ignore();
     }
 };
 

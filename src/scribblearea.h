@@ -35,7 +35,6 @@ public:
     }
     void initialize(){
         setAuthor("onoie");
-        edit = false;
         scribbling = false;
         frame=0;
         images={{createImage(),createImage()}};
@@ -84,27 +83,17 @@ public:
             return false;
         }
         setImage(loadedImage);
-        edit = false;
         createOnionSkin();
         update();
         return true;
     }
     bool saveImage(const QString &fileName, const char *fileFormat){
-        Image visibleImage = getFrameImage(getFrame());
-        resizeImage(&visibleImage, size());
-        if (visibleImage.save(fileName, fileFormat)) {
-            edit = false;
-            return true;
-        } else {
-            return false;
-        }
+        return getFrameImage(getFrame()).save(fileName, fileFormat);
     }
     QString getTitle(){ return this->title; }
     void setTitle(QString title){ this->title=title; }
     QString getAuthor(){ return this->author; }
     void setAuthor(QString author){ this->author=author; }
-    bool isEdit() const { return edit; }
-    void editing(){ edit=true; }
     QColor getPenColor() const { return penColor; }
     void setPenColor(const QColor &newColor){ penColor = newColor; }
     int getPenWidth() const { return penWidth; }
@@ -180,7 +169,6 @@ public slots:
     }
     void clearImage(){
         getImagep()->fill(qRgba(255,255,255,0));
-        editing();
         createOnionSkin();
         update();
     }
@@ -191,7 +179,6 @@ private:
     QString title="untitled",author="unknown";
     unsigned int frame,layer,onionSkinCount;
     vector<vector<Image>> images;
-    bool edit;
     bool scribbling;
     int penWidth=10;
     QColor penColor=Qt::red;
@@ -202,22 +189,11 @@ private:
         painter.setCompositionMode(QPainter::CompositionMode_Source);//forErase
         painter.setPen(QPen(penColor, penWidth, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
         painter.drawLine(lastPoint, endPoint);
-        editing();
         int rad = (penWidth / 2) + 2;
         update(QRect(lastPoint, endPoint)
                .normalized()
                .adjusted(-rad, -rad, +rad, +rad));
         lastPoint = endPoint;
-    }
-    void resizeImage(Image *image, const QSize &newSize){
-        if (image->size() == newSize){
-            return;
-        }
-        Image newImage(newSize, Image::Format_RGB32);
-        newImage.fill(qRgb(255, 255, 255));
-        QPainter painter(&newImage);
-        painter.drawImage(QPoint(0, 0), *image);
-        *image = newImage;
     }
 protected:
     void paintEvent(QPaintEvent *event) override{
