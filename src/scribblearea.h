@@ -83,8 +83,6 @@ public:
         if (!loadedImage.load(fileName)){
             return false;
         }
-        QSize newSize = loadedImage.size().expandedTo(size());
-        resizeImage(&loadedImage, newSize);
         setImage(loadedImage);
         edit = false;
         createOnionSkin();
@@ -255,15 +253,6 @@ protected:
             drawLineTo(event->pos());
             scribbling = false;
         }
-    }
-    void resizeEvent(QResizeEvent *event) override{
-        if (width() > getImage().width() || height() > getImage().height()) {
-            int newWidth = qMax(width() + 128, getImage().width());
-            int newHeight = qMax(height() + 128, getImage().height());
-            resizeImage(getImagep(), QSize(newWidth, newHeight));
-            update();
-        }
-        QWidget::resizeEvent(event);
     }
 };
 
