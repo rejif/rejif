@@ -348,10 +348,6 @@ private:
         }));
         addToolBar(Qt::TopToolBarArea,lambdaBar);
 
-        QToolBar *console =Slib::createToolBar(tr("Console"));
-        console->addWidget(new QLineEdit());
-        addToolBar(Qt::TopToolBarArea,console);
-
         QWidget *cw = new QWidget();
         setCentralWidget(cw);
         QHBoxLayout *hl = Slib::createHLayout();
