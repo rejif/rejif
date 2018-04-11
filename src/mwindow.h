@@ -2,10 +2,10 @@
 #define MWINDOW_H
 
 #include "slib.h"
-#include "scribblearea.h"
 #include "image.h"
-#include "info.h"
+#include "scribblearea.h"
 #include "layout.h"
+#include "info.h"
 #include "preview.h"
 
 #include <QDebug>
@@ -355,6 +355,8 @@ private:
         QVBoxLayout *vl = Slib::createVLayout();
         hl->addLayout(vl);
         vl->addWidget(scribbleArea);
+        Layout* l=new Layout();
+        vl->addWidget(l);
     }
     void createMenus(){
         //FileMenu

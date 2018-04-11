@@ -12,7 +12,7 @@ public:
     QImage image;
     Layout(QWidget *parent = 0):QWidget(parent){
         this->setMinimumHeight(30);
-        image=QImage(500,30,QImage::Format_ARGB32_Premultiplied);
+        image=QImage(720,30,QImage::Format_ARGB32_Premultiplied);
         image.fill(Qt::darkGray);
     }
 protected:
@@ -21,7 +21,7 @@ protected:
         QRect dirtyRect = event->rect();
         painter.drawImage(dirtyRect, image, dirtyRect);
         painter.setPen(QPen(Qt::white));
-        painter.drawText(10,25,QString("[%1]")
+        painter.drawText(10,20,QString("[%1]")
                 .arg("PRAMS"));
     }
 };
