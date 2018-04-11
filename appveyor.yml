@@ -20,20 +20,21 @@ install:
 
 build_script:
   - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86'
-  - ps : .\bitbucket.ps1
   - qmake rejif.pro
   - dir
   - nmake
   - dir
+#  - ps : .\bitbucket.ps1
+
 
 after_build:
-  - ps : xcopy lib release/lib /Y
   - cd release
-  - windeployqt --no-compiler-runtime --no-translations --release regif.exe
+  - windeployqt --no-compiler-runtime --no-translations --release rejif.exe
   - ps : rm *.cpp
   - ps : rm *.h
   - ps : rm *.obj
   - dir
+#  - ps : xcopy lib release/lib /Y
 
 artifacts:
   - path: release
