@@ -12,7 +12,6 @@ addons:
     - zip
 before_install:
   - git submodule update --init --recursive
-  - ./travis.sh
   - '[ "$TRAVIS_OS_NAME" != osx ] || rvm install 2.3.0'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt5'
