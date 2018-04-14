@@ -10,12 +10,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
     $$PWD/mwindow.h \
-    $$PWD/scribblearea.h \
     $$PWD/slib.h \
     $$PWD/image.h \
     $$PWD/info.h \
-    $$PWD/layout.h \
-    $$PWD/preview.h
+    $$PWD/preview.h \
+    $$PWD/scene.h \
+    $$PWD/director.h
 
 SOURCES += \
     $$PWD/main.cpp

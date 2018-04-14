@@ -26,7 +26,6 @@ build_script:
   - dir
 #  - ps : .\bitbucket.ps1
 
-
 after_build:
   - cd release
   - windeployqt --no-compiler-runtime --no-translations --release rejif.exe

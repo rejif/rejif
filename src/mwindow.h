@@ -3,8 +3,8 @@
 
 #include "slib.h"
 #include "image.h"
-#include "scribblearea.h"
-#include "layout.h"
+#include "scene.h"
+#include "director.h"
 #include "info.h"
 #include "preview.h"
 
@@ -26,7 +26,7 @@ class MWindow : public QMainWindow{
     Q_OBJECT
 public:
     MWindow(QWidget *parent = 0):QMainWindow(parent){
-        scribbleArea = new ScribbleArea(this);
+        scene = new Scene(this);
 
         setMaximumWidth(1200);
         setMaximumHeight(700);
@@ -37,14 +37,14 @@ public:
         createStatusBar();
 
         QObject::connect(
-            scribbleArea,SIGNAL(updateStatusbarSignal(QString)),
+            scene,SIGNAL(updateStatusbarSignal(QString)),
             this,SLOT(updateStatusText(QString))
         );
         updateStatusText(QString("Initialized %1x%2 in %3x%4")
             .arg(this->width())
             .arg(this->height())
-            .arg(scribbleArea->width())
-            .arg(scribbleArea->height()));
+            .arg(scene->width())
+            .arg(scene->height()));
 
         useDefaultTool();
     }
@@ -64,24 +64,24 @@ public slots:
         updateStatusText("usePrimaryTool");
         switch (t_profile) {
             case PROFILE::ONE:
-                scribbleArea->setPenWidth(2);
-                scribbleArea->setPenColor(QColor(0,0,0,255));
+                scene->setPenWidth(2);
+                scene->setPenColor(QColor(0,0,0,255));
                 break;
             case PROFILE::TWO:
-                scribbleArea->setPenWidth(5);
-                scribbleArea->setPenColor(QColor(191,191,191,255));
+                scene->setPenWidth(5);
+                scene->setPenColor(QColor(191,191,191,255));
                 break;
             case PROFILE::THREE:
-                scribbleArea->setPenWidth(20);
-                scribbleArea->setPenColor(QColor(191,191,191,255));
+                scene->setPenWidth(20);
+                scene->setPenColor(QColor(191,191,191,255));
                 break;
             case PROFILE::FOUR:
-                scribbleArea->setPenWidth(5);
-                scribbleArea->setPenColor(QColor(250,241,230,255));
+                scene->setPenWidth(5);
+                scene->setPenColor(QColor(250,241,230,255));
                 break;
             case PROFILE::FIVE:
-                scribbleArea->setPenWidth(5);
-                scribbleArea->setPenColor(QColor(54,46,43,255));
+                scene->setPenWidth(5);
+                scene->setPenColor(QColor(54,46,43,255));
                 break;
             case PROFILE::SIX:
             case PROFILE::SEVEN:
@@ -90,8 +90,8 @@ public slots:
             case PROFILE::DEFAULT:
             default:
                 qDebug()<<"DefaultPrimary";
-                scribbleArea->setPenWidth(1);
-                scribbleArea->setPenColor(Qt::black);
+                scene->setPenWidth(1);
+                scene->setPenColor(Qt::black);
                 break;
         }
     }
@@ -99,8 +99,8 @@ public slots:
         updateStatusText("useSecondaryTool");
         switch (t_profile) {
             case PROFILE::THREE:
-                scribbleArea->setPenWidth(16);
-                scribbleArea->setPenColor(QColor(Qt::transparent));
+                scene->setPenWidth(16);
+                scene->setPenColor(QColor(Qt::transparent));
                 break;
             case PROFILE::ONE:
             case PROFILE::TWO:
@@ -113,8 +113,8 @@ public slots:
             case PROFILE::DEFAULT:
             default:
                 qDebug()<<"useDefaultSecondary";
-                scribbleArea->setPenWidth(8);
-                scribbleArea->setPenColor(QColor(Qt::transparent));
+                scene->setPenWidth(8);
+                scene->setPenColor(QColor(Qt::transparent));
                 break;
         }
     }
@@ -140,7 +140,7 @@ private slots:
     void open(){
         QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"), QDir::currentPath());
         if (!fileName.isEmpty()){
-            scribbleArea->loadImage(fileName);
+            scene->loadImage(fileName);
         }
     }
     void save(){
@@ -149,26 +149,26 @@ private slots:
         saveFile(fileFormat);
     }
     void penColor(){
-        QColor newColor = QColorDialog::getColor(scribbleArea->getPenColor());
+        QColor newColor = QColorDialog::getColor(scene->getPenColor());
         if (newColor.isValid())
-            scribbleArea->setPenColor(newColor);
+            scene->setPenColor(newColor);
     }
     void penWidth(){
         bool ok;
         int newWidth = QInputDialog::getInt(this,
             tr("Scribble"),
             tr("Select pen width:"),
-            scribbleArea->getPenWidth(),
+            scene->getPenWidth(),
             1, 50, 1, &ok);
         if (ok){
-            scribbleArea->setPenWidth(newWidth);
+            scene->setPenWidth(newWidth);
         }
     }
     void updateStatusText(QString text){
         statusText->setText(text);
     }
 private:
-    ScribbleArea *scribbleArea;
+    Scene *scene;
     QList<QAction *> saveAsActs;
     QLabel *statusText;
     QString createFileName(QString title,int frame,int layer,QString extension="png"){
@@ -189,9 +189,9 @@ private:
     }
     QAction* createQuietSaveAction(){
         return Slib::createLambdaAction("QuietSave",[=]{
-            Image img = scribbleArea->getFrameImage(scribbleArea->getFrame());
+            Image img = scene->getFrameImage(scene->getFrame());
             QString imgPath = QString("%1_%2.%3")
-                .arg(scribbleArea->getTitle())
+                .arg(scene->getTitle())
                 .arg(Slib::getNow("yyyyMMdd_hhmmss"))
                 .arg("png");
             saveImage(img,cacheDir+imgPath);
@@ -199,7 +199,7 @@ private:
     }
     QAction* createSequenceLoadAction(){
         return Slib::createLambdaAction("SequenceLoad",[=]{
-            scribbleArea->initialize();
+            scene->initialize();
             unsigned int frame=0,layer=0;
             bool notfound=false;
             QString filePath = QFileDialog::getOpenFileName(this,tr("Open File"),layerDir );
@@ -221,17 +221,17 @@ private:
                         frame++;
                         layer=0;
                     }else{
-                        if(frame > scribbleArea->getImages().size()-1){
+                        if(frame > scene->getImages().size()-1){
                             //qDebug()<<sequence<<scribbleArea->getImages().size();
-                            scribbleArea->addFrame();
+                            scene->addFrame();
                         }
-                        scribbleArea->setFrameLayerImage(frame,layer,loadedImage);
+                        scene->setFrameLayerImage(frame,layer,loadedImage);
                         notfound=false;
                         layer++;
                     }
                 }
-                scribbleArea->createOnionSkin();
-                scribbleArea->update();
+                scene->createOnionSkin();
+                scene->update();
             }else{
                 //Error
             }
@@ -241,22 +241,22 @@ private:
 
     QAction* createFrameSequenceSaveAction(){
         return Slib::createLambdaAction("FrameSequenceSave",[=]{
-            vector < vector <Image>> images = scribbleArea->getImages();
+            vector < vector <Image>> images = scene->getImages();
             for(int frame = 0; frame < (int) images.size(); ++frame) {
-                Image displayImage = scribbleArea->getFrameImage(frame);
-                QString imgPath = createFileName(scribbleArea->getTitle(),frame,0);
+                Image displayImage = scene->getFrameImage(frame);
+                QString imgPath = createFileName(scene->getTitle(),frame,0);
                 saveImage(displayImage,frameDir+imgPath);
             }
         });
     }
     QAction* createLayerSequenceSaveAction(){
         return Slib::createLambdaAction("LayerSequenceSave",[=]{
-            vector < vector <Image>> images = scribbleArea->getImages();
+            vector < vector <Image>> images = scene->getImages();
             for(int frame = 0; frame < (int) images.size(); ++frame) {
                 vector <Image> layers = images[frame];
                 for(int layer = 0; layer < (int) layers.size(); ++layer) {
                     Image layerImg = layers[layer];
-                    QString imgPath = createFileName(scribbleArea->getTitle(),frame,layer);
+                    QString imgPath = createFileName(scene->getTitle(),frame,layer);
                     saveImage(layerImg,layerDir+imgPath);
                 }
             }
@@ -264,9 +264,9 @@ private:
     }
     QAction* createPublishAction(){
         return Slib::createLambdaAction("Publish[white]",[=]{
-            vector < vector <Image>> images = scribbleArea->getImages();
+            vector < vector <Image>> images = scene->getImages();
             for(int frame = 0; frame < (int) images.size(); ++frame) {
-                Image displayImage = scribbleArea->getDisplayImage(frame,Qt::white);
+                Image displayImage = scene->getDisplayImage(frame,Qt::white);
                 //
                 QPainter publishPainter(&displayImage);
                 QFont font;
@@ -274,9 +274,9 @@ private:
                 font.setPixelSize(24);
                 publishPainter.setFont(font);
                 publishPainter.setPen(QPen(Qt::gray));
-                publishPainter.drawText(10,30,"# Project:"+scribbleArea->getTitle());
+                publishPainter.drawText(10,30,"# Project:"+scene->getTitle());
                 //
-                saveImage(displayImage,cacheDir+QString("%1-%2.png").arg(scribbleArea->getTitle()).arg(frame,3,10,QChar('0')));
+                saveImage(displayImage,cacheDir+QString("%1-%2.png").arg(scene->getTitle()).arg(frame,3,10,QChar('0')));
             }
         });
     }
@@ -290,14 +290,14 @@ private:
     bool saveFile(const QByteArray &fileFormat){
         QString fileName = QFileDialog::getSaveFileName(this,
             tr("Save As"),
-            cacheDir + "/"+scribbleArea->getTitle()+"."+fileFormat,
+            cacheDir + "/"+scene->getTitle()+"."+fileFormat,
             tr("%1 Files (*.%2);;All Files (*)")
             .arg(QString::fromLatin1(fileFormat.toUpper()))
             .arg(QString::fromLatin1(fileFormat)));
         if (fileName.isEmpty()) {
             return false;
         } else {
-            return scribbleArea->saveImage(fileName, fileFormat.constData());
+            return scene->saveImage(fileName, fileFormat.constData());
         }
     }
     void createWidget(){
@@ -307,6 +307,7 @@ private:
         Preview* prev = new Preview();
         pw->setWidget(prev);
         addDockWidget(Qt::LeftDockWidgetArea,pw);
+        pw->hide();
 
         QDockWidget *tw = Slib::createDockWidget(tr("Information"));
         tw->setMaximumWidth(200);
@@ -314,6 +315,7 @@ private:
         Info* info = new Info();
         tw->setWidget(info);
         addDockWidget(Qt::LeftDockWidgetArea,tw);
+        tw->hide();
 
         QDockWidget *dw = Slib::createDockWidget(tr("Dock"));
         dw->setMinimumWidth(200);
@@ -323,28 +325,31 @@ private:
         dwvl->addWidget(
             Slib::createSlotActionButton(
                 "ScribbleAreaTestAction",
-                scribbleArea,SLOT(test())
+                scene,SLOT(test())
             )
         );
         dwvl->addStretch();
         dw->setWidget(Slib::createBoxWidget(dwvl));
         addDockWidget(Qt::LeftDockWidgetArea,dw);
+        dw->hide();
 
         QToolBar *toolBar =Slib::createToolBar(tr("Tool"));
         toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
             qDebug()<<"ToolFunction";
         }));
         addToolBar(Qt::RightToolBarArea,toolBar);
+        toolBar->hide();
 
         QToolBar *quickBar =Slib::createToolBar(tr("Quick"));
         quickBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
             qDebug()<<"QuickFunction";
         }));
         addToolBar(Qt::TopToolBarArea,quickBar);
+        quickBar->hide();
 
         QToolBar *lambdaBar =Slib::createToolBar(tr("LambdaBar"));
         lambdaBar->addAction(Slib::createLambdaAction("InsertFrameAfter",[=]{
-            scribbleArea->insertFrameAfter();
+            scene->insertFrameAfter();
         }));
         addToolBar(Qt::TopToolBarArea,lambdaBar);
 
@@ -354,9 +359,9 @@ private:
         cw->setLayout(hl);
         QVBoxLayout *vl = Slib::createVLayout();
         hl->addLayout(vl);
-        vl->addWidget(scribbleArea);
-        Layout* l=new Layout();
-        vl->addWidget(l);
+        vl->addWidget(scene);
+        Director* director=new Director();
+        vl->addWidget(director);
     }
     void createMenus(){
         //FileMenu
@@ -417,50 +422,50 @@ private:
         optionMenu->addSeparator();
         QAction *clearScreenAct = new QAction(tr("&Clear Screen"), this);
         clearScreenAct->setShortcut(tr("Ctrl+L"));
-        connect(clearScreenAct, SIGNAL(triggered()),scribbleArea, SLOT(clearImage()));
+        connect(clearScreenAct, SIGNAL(triggered()),scene, SLOT(clearImage()));
         optionMenu->addAction(clearScreenAct);
 
         //LambdaMenu
         QMenu *lambdaMenu = new QMenu(tr("&Lambda"), this);
         menuBar()->addMenu(lambdaMenu);
         lambdaMenu->addAction(Slib::createLambdaAction("OnionSkinPlus",[=]{
-            scribbleArea->setOnionSkinCountPlus();
+            scene->setOnionSkinCountPlus();
         }));
         lambdaMenu->addAction(Slib::createLambdaAction("OnionSkinMinus",[=]{
-            scribbleArea->setOnionSkinCountMinus();
+            scene->setOnionSkinCountMinus();
         }));
         lambdaMenu->addAction(Slib::createLambdaAction("MergeFrontToBack",[=]{
-            Image base = scribbleArea->getLayerImage(0);
+            Image base = scene->getLayerImage(0);
             QPainter mergePainter(&base);
-            mergePainter.drawImage(0,0,scribbleArea->getLayerImage(1));
-            scribbleArea->setLayerImage(1,scribbleArea->createImage());
-            scribbleArea->setLayerImage(0,base);
+            mergePainter.drawImage(0,0,scene->getLayerImage(1));
+            scene->setLayerImage(1,scene->createImage());
+            scene->setLayerImage(0,base);
         }));
         lambdaMenu->addAction(Slib::createLambdaAction("MergeFrontToBackAll",[=]{
-            vector < vector <Image>> images = scribbleArea->getImages();
+            vector < vector <Image>> images = scene->getImages();
             for(int frame = 0; frame < (int) images.size(); ++frame) {
-                Image base = scribbleArea->getFrameLayerImage(frame,0);
+                Image base = scene->getFrameLayerImage(frame,0);
                 QPainter mergePainter(&base);
-                mergePainter.drawImage(0,0,scribbleArea->getFrameLayerImage(frame,1));
-                scribbleArea->setFrameLayerImage(frame,1,scribbleArea->createImage());
-                scribbleArea->setFrameLayerImage(frame,0,base);
+                mergePainter.drawImage(0,0,scene->getFrameLayerImage(frame,1));
+                scene->setFrameLayerImage(frame,1,scene->createImage());
+                scene->setFrameLayerImage(frame,0,base);
             }
         }));
         lambdaMenu->addAction(Slib::createLambdaAction("MergeBackToFront",[=]{
-            Image base = scribbleArea->getLayerImage(1);
+            Image base = scene->getLayerImage(1);
             QPainter mergePainter(&base);
-            mergePainter.drawImage(0,0,scribbleArea->getLayerImage(0));
-            scribbleArea->setLayerImage(0,scribbleArea->createImage());
-            scribbleArea->setLayerImage(1,base);
+            mergePainter.drawImage(0,0,scene->getLayerImage(0));
+            scene->setLayerImage(0,scene->createImage());
+            scene->setLayerImage(1,base);
         }));
         lambdaMenu->addAction(Slib::createLambdaAction("MergeBackToFrontAll",[=]{
-            vector < vector <Image>> images = scribbleArea->getImages();
+            vector < vector <Image>> images = scene->getImages();
             for(int frame = 0; frame < (int) images.size(); ++frame) {
-                Image base = scribbleArea->getFrameLayerImage(frame,1);
+                Image base = scene->getFrameLayerImage(frame,1);
                 QPainter mergePainter(&base);
-                mergePainter.drawImage(0,0,scribbleArea->getFrameLayerImage(frame,0));
-                scribbleArea->setFrameLayerImage(frame,0,scribbleArea->createImage());
-                scribbleArea->setFrameLayerImage(frame,1,base);
+                mergePainter.drawImage(0,0,scene->getFrameLayerImage(frame,0));
+                scene->setFrameLayerImage(frame,0,scene->createImage());
+                scene->setFrameLayerImage(frame,1,base);
             }
         }));
 
@@ -487,38 +492,38 @@ private:
 
         //Q
         QAction *qAct = Slib::createLambdaAction(tr("&QKeyAction[Add Frame]"),[=]{
-            scribbleArea->addFrame();
-            updateStatusText(QString("add frame [0-%1]").arg(scribbleArea->getImages().size()-1));
+            scene->addFrame();
+            updateStatusText(QString("add frame [0-%1]").arg(scene->getImages().size()-1));
         });
         qAct->setShortcut(Qt::Key_Q);
         shortcutMenu->addAction(qAct);
         //W
         QAction *wAct = Slib::createLambdaAction(tr("&WKeyAction [LayerUp]"),[=]{
-            scribbleArea->action(Operation::UP);
+            scene->action(Operation::UP);
         });
         wAct->setShortcut(tr("W"));
         shortcutMenu->addAction(wAct);
         //S
         QAction *sAct = Slib::createLambdaAction(tr("&SKeyAction [LayerDown]"),[=]{
-            scribbleArea->action(Operation::DOWN);
+            scene->action(Operation::DOWN);
         });
         sAct->setShortcut(Qt::Key_S);
         shortcutMenu->addAction(sAct);
         //D
         QAction *dAct = Slib::createLambdaAction(tr("&DKeyAction [FrameRight]"),[=]{
-            scribbleArea->action(Operation::RIGHT);
+            scene->action(Operation::RIGHT);
         });
         dAct->setShortcut(Qt::Key_D);
         shortcutMenu->addAction(dAct);
         //A
         QAction *aAct = Slib::createLambdaAction(tr("&AKeyAction [FrameLeft]"),[=]{
-            scribbleArea->action(Operation::LEFT);
+            scene->action(Operation::LEFT);
         });
         aAct->setShortcut(Qt::Key_A);
         shortcutMenu->addAction(aAct);
         //Z
         QAction *zAct = Slib::createLambdaAction(tr("&ZKeyAction [PLAYBLAST]"),[=]{
-            scribbleArea->action(Operation::PLAYBLAST);
+            scene->action(Operation::PLAYBLAST);
         });
         zAct->setShortcut(Qt::Key_Z);
         shortcutMenu->addAction(zAct);

@@ -1,6 +1,6 @@
 
-#ifndef SCRIBBLEAREA_H
-#define SCRIBBLEAREA_H
+#ifndef SCENE_H
+#define SCENE_H
 
 #include "slib.h"
 #include "image.h"
@@ -23,10 +23,10 @@ enum Operation{
     PLAYBLAST
 };
 
-class ScribbleArea : public QWidget{
+class Scene : public QWidget{
     Q_OBJECT
 public:
-    ScribbleArea(QWidget *parent = 0): QWidget(parent){
+    Scene(QWidget *parent = 0): QWidget(parent){
         setAttribute(Qt::WA_StaticContents);
         setFixedSize(720,480);
         initialize();
@@ -231,6 +231,4 @@ protected:
         }
     }
 };
-
-
 #endif

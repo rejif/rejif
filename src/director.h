@@ -6,11 +6,11 @@
 #include <QPainter>
 #include "slib.h"
 
-class Layout : public QWidget{
+class Director : public QWidget{
 public:
     QSize size;
     QImage image;
-    Layout(QWidget *parent = 0):QWidget(parent){
+    Director(QWidget *parent = 0):QWidget(parent){
         this->setMinimumHeight(30);
         image=QImage(720,30,QImage::Format_ARGB32_Premultiplied);
         image.fill(Qt::darkGray);
