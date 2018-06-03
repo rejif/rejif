@@ -13,7 +13,7 @@ install:
   - set PATH=%PATH%;%QTDIR%\bin;C:\MinGW\bin
 
 build_script:
-  - qmake signal.pro
+  - qmake rejif.pro
   - mingw32-make
 #  - ps : .\bitbucket.ps1
 
