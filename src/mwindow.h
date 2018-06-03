@@ -334,14 +334,14 @@ private:
         dw->hide();
 
         QToolBar *toolBar =Slib::createToolBar(tr("Tool"));
-        toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
+        toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/rejif.png"),"ToolAction",[=]{
             qDebug()<<"ToolFunction";
         }));
         addToolBar(Qt::RightToolBarArea,toolBar);
         toolBar->hide();
 
         QToolBar *quickBar =Slib::createToolBar(tr("Quick"));
-        quickBar->addAction(Slib::createLambdaIconAction(QIcon(":/TransAssist.gif"),"ToolAction",[=]{
+        quickBar->addAction(Slib::createLambdaIconAction(QIcon(":/rejif.png"),"ToolAction",[=]{
             qDebug()<<"QuickFunction";
         }));
         addToolBar(Qt::TopToolBarArea,quickBar);
