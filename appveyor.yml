@@ -5,32 +5,27 @@ notifications:
     on_build_failure: false
     on_build_status_changed: false
 
-version: 1.0.{build}
-
-branches:
-  only:
-    - master
-
 os: Visual Studio 2015
 
 install:
   - git submodule update --init --recursive
-  - set QTDIR=C:\Qt\5.7\msvc2015
-  - set PATH=%PATH%;%QTDIR%\bin
+  - set QTDIR=C:\Qt\5.10.1\mingw53_32
+  - set PATH=%PATH%;%QTDIR%\bin;C:\MinGW\bin
 
 build_script:
-  - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86'
-  - qmake rejif.pro
-  - dir
-  - nmake
-  - dir
+  - qmake signal.pro
+  - mingw32-make
 #  - ps : .\bitbucket.ps1
 
 after_build:
   - cd release
+  - copy "%QTDIR%\bin\libgcc_s_dw2-1.dll" .
+  - copy "%QTDIR%\bin\libstdc++-6.dll" .
+  - copy "%QTDIR%\bin\libwinpthread-1.dll" .
   - windeployqt --no-compiler-runtime --no-translations --release rejif.exe
   - ps : rm *.cpp
   - ps : rm *.h
+  - ps : rm *.o
   - ps : rm *.obj
   - dir
 #  - ps : xcopy lib release/lib /Y
