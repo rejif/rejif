@@ -21,6 +21,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QImageWriter>
+#include <QProcess>
 
 class MWindow : public QMainWindow{
     Q_OBJECT
@@ -578,6 +579,13 @@ private:
         QMenu *helpMenu = new QMenu(tr("&Help"), this);
         QAction *aboutQtAct = helpMenu->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
         aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
+
+        QAction* updateAct = new QAction("ApplicationUpdate");
+        QObject::connect(updateAct,&QAction::triggered,[=]{
+            QProcess::execute("C:/Windows/System32/cmd.exe /C start https://ci.appveyor.com/project/onoie/rejif/build/artifacts/");
+        });
+        helpMenu->addAction(updateAct);
+
         menuBar()->addMenu(helpMenu);
     }
 protected:
