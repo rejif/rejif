@@ -190,16 +190,6 @@ private:
                QMessageBox::Ok);
         }
     }
-    QAction* createQuietSaveAction(){
-        return Slib::createLambdaAction("QuietSave",[=]{
-            Image img = scene->getFrameImage(scene->getFrame());
-            QString imgPath = QString("%1_%2.%3")
-                .arg(scene->getTitle())
-                .arg(Slib::getNow("yyyyMMdd_hhmmss"))
-                .arg("png");
-            saveImage(img,cacheDir+imgPath);
-        });
-    }
     QAction* createSequenceLoadAction(){
         return Slib::createLambdaAction("SequenceLoad",[=]{
             scene->initialize();
@@ -396,7 +386,15 @@ private:
         }
         fileMenu->addMenu(saveAsMenu);
 
-        fileMenu->addAction(createQuietSaveAction());
+        fileMenu->addAction(Slib::createLambdaAction("QuietSave",[=]{
+                Image img = scene->getFrameImage(scene->getFrame());
+                QString imgPath = QString("%1_%2.%3")
+                    .arg(scene->getTitle())
+                    .arg(Slib::getNow("yyyyMMdd_hhmmss"))
+                    .arg("png");
+                saveImage(img,cacheDir+imgPath);
+            })
+        );
         fileMenu->addSeparator();
 
         QAction *exitAct = new QAction(tr("E&xit"), this);
