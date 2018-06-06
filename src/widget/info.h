@@ -4,7 +4,7 @@
 #include <QtWidgets>
 #include <QImage>
 #include <QPainter>
-#include "slib.h"
+#include "../slib.h"
 
 class Info : public QWidget{
 public:
@@ -20,8 +20,7 @@ protected:
         QRect dirtyRect = event->rect();
         painter.drawImage(dirtyRect, image, dirtyRect);
         painter.setPen(QPen(Qt::white));
-        painter.drawText(10,25,QString("[%1]")
-                .arg("PRAMS"));
+        painter.drawText(10,25,QString("Info[%1]").arg("PRAMS"));
     }
 };
 

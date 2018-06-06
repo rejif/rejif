@@ -2,11 +2,11 @@
 #define MWINDOW_H
 
 #include "slib.h"
-#include "image.h"
-#include "scene.h"
-#include "director.h"
-#include "info.h"
-#include "preview.h"
+#include "core/image.h"
+#include "core/scene.h"
+#include "widget/monitor.h"
+#include "widget/info.h"
+#include "widget/preview.h"
 
 #include <QDebug>
 #include <QMenu>
@@ -26,6 +26,8 @@ class MWindow : public QMainWindow{
     Q_OBJECT
 public:
     MWindow(QWidget *parent = 0):QMainWindow(parent){
+
+        setWindowFlags(Qt::WindowStaysOnTopHint);
         scene = new Scene(this);
 
         setMaximumWidth(1200);
@@ -360,7 +362,7 @@ private:
         QVBoxLayout *vl = Slib::createVLayout();
         hl->addLayout(vl);
         vl->addWidget(scene);
-        Director* director=new Director();
+        Monitor* director=new Monitor();
         vl->addWidget(director);
     }
     void createMenus(){

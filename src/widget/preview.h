@@ -1,10 +1,10 @@
-#ifndef PREV_H
-#define PREV_H
+#ifndef PREVIEW_H
+#define PREVIEW_H
 
 #include <QtWidgets>
 #include <QImage>
 #include <QPainter>
-#include "slib.h"
+#include "../slib.h"
 
 class Preview : public QWidget{
 public:
@@ -22,4 +22,4 @@ protected:
     }
 };
 
-#endif // PREV_H
+#endif // PREVIEW_H

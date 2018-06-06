@@ -1,8 +1,7 @@
-
 #ifndef SCENE_H
 #define SCENE_H
 
-#include "slib.h"
+#include "../slib.h"
 #include "image.h"
 
 #include <iostream>

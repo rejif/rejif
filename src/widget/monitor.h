@@ -1,16 +1,16 @@
-#ifndef LAYOUT_H
-#define LAYOUT_H
+#ifndef MONITOR_H
+#define MONITOR_H
 
 #include <QtWidgets>
 #include <QImage>
 #include <QPainter>
-#include "slib.h"
+#include "../slib.h"
 
-class Director : public QWidget{
+class Monitor : public QWidget{
 public:
     QSize size;
     QImage image;
-    Director(QWidget *parent = 0):QWidget(parent){
+    Monitor(QWidget *parent = 0):QWidget(parent){
         this->setMinimumHeight(30);
         image=QImage(720,30,QImage::Format_ARGB32_Premultiplied);
         image.fill(Qt::darkGray);
@@ -21,9 +21,8 @@ protected:
         QRect dirtyRect = event->rect();
         painter.drawImage(dirtyRect, image, dirtyRect);
         painter.setPen(QPen(Qt::white));
-        painter.drawText(10,20,QString("[%1]")
-                .arg("PRAMS"));
+        painter.drawText(10,20,QString("Monitor[%1]").arg("PRAMS"));
     }
 };
 
-#endif // LAYOUT_H
+#endif // MONITOR_H

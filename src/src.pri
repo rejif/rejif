@@ -13,17 +13,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 HEADERS += \
     $$PWD/mwindow.h \
     $$PWD/slib.h \
-    $$PWD/image.h \
-    $$PWD/info.h \
-    $$PWD/preview.h \
-    $$PWD/scene.h \
-    $$PWD/director.h
+    $$PWD/widget/info.h \
+    $$PWD/widget/preview.h \
+    $$PWD/core/image.h \
+    $$PWD/core/scene.h \
+    $$PWD/widget/monitor.h
 
 SOURCES += \
     $$PWD/main.cpp
 
 RESOURCES += \
     $$PWD/resources/resource.qrc
+
+DISTFILES += \
+    $$PWD/icon.rc
 
 win32 {
     RC_FILE += $$PWD/icon.rc
