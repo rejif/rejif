@@ -12,15 +12,18 @@ TEMPLATE = app
 DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
-    $$PWD/mwindow.h \
-    $$PWD/slib.h \
-    $$PWD/widget/info.h \
-    $$PWD/widget/preview.h \
+    $$PWD/base/mainwindow.h \
+    $$PWD/base/scribblearea.h \
     $$PWD/core/image.h \
     $$PWD/core/scene.h \
-    $$PWD/widget/monitor.h
+    $$PWD/widget/info.h \
+    $$PWD/widget/preview.h \
+    $$PWD/widget/monitor.h \
+    $$PWD/mwindow.h \
+    $$PWD/slib.h
 
 SOURCES += \
+    $$PWD/mwindow.cpp \
     $$PWD/main.cpp
 
 RESOURCES += \

@@ -2,6 +2,7 @@
 #define MWINDOW_H
 
 #include "slib.h"
+#include "base/mainwindow.h"
 #include "core/image.h"
 #include "core/scene.h"
 #include "widget/monitor.h"
@@ -23,17 +24,16 @@
 #include <QImageWriter>
 #include <QProcess>
 
-class MWindow : public QMainWindow{
+class MWindow:public MainWindow{
     Q_OBJECT
 public:
-    MWindow(QWidget *parent = 0):QMainWindow(parent){
-
+    MWindow(QWidget *parent = 0):MainWindow(parent){
+        setWindowTitle(tr("Rejif"));
         setWindowFlags(Qt::WindowStaysOnTopHint);
+    }
+    ~MWindow(){}
+    void initialize(int w,int h)override{
         scene = new Scene(this);
-
-        setMaximumWidth(1200);
-        setMaximumHeight(700);
-        //resize(this->maximumWidth(),this->maximumHeight());
 
         createWidget();
         createMenus();
@@ -50,313 +50,12 @@ public:
             .arg(scene->height()));
 
         useDefaultTool();
-    }
-    const QString cacheDir = Slib::mkdirp(QDir::currentPath()+"/cache/");
-    const QString frameDir = Slib::mkdirp(QDir::currentPath()+"/frame/");
-    const QString layerDir = Slib::mkdirp(QDir::currentPath()+"/layer/");
-    ~MWindow(){}
 
-    PROFILE t_profile = PROFILE::DEFAULT;
-public slots:
-    void useDefaultTool(){
-        updateStatusText("useProfile:Default");
-        t_profile=PROFILE::DEFAULT;
-        usePrimary();
+        setMaximumWidth(w);
+        setMaximumHeight(h);
+        resize(this->minimumWidth(),this->minimumHeight());
     }
-    void usePrimary(){
-        updateStatusText("usePrimaryTool");
-        switch (t_profile) {
-            case PROFILE::ONE:
-                scene->setPenWidth(2);
-                scene->setPenColor(QColor(0,0,0,255));
-                break;
-            case PROFILE::TWO:
-                scene->setPenWidth(5);
-                scene->setPenColor(QColor(191,191,191,255));
-                break;
-            case PROFILE::THREE:
-                scene->setPenWidth(20);
-                scene->setPenColor(QColor(191,191,191,255));
-                break;
-            case PROFILE::FOUR:
-                scene->setPenWidth(5);
-                scene->setPenColor(QColor(250,241,230,255));
-                break;
-            case PROFILE::FIVE:
-                scene->setPenWidth(5);
-                scene->setPenColor(QColor(54,46,43,255));
-                break;
-            case PROFILE::SIX:
-            case PROFILE::SEVEN:
-            case PROFILE::EIGHT:
-            case PROFILE::NINE:
-            case PROFILE::DEFAULT:
-            default:
-                qDebug()<<"DefaultPrimary";
-                scene->setPenWidth(1);
-                scene->setPenColor(Qt::black);
-                break;
-        }
-    }
-    void useSecondary(){
-        updateStatusText("useSecondaryTool");
-        switch (t_profile) {
-            case PROFILE::THREE:
-                scene->setPenWidth(16);
-                scene->setPenColor(QColor(Qt::transparent));
-                break;
-            case PROFILE::ONE:
-            case PROFILE::TWO:
-            case PROFILE::FOUR:
-            case PROFILE::FIVE:
-            case PROFILE::SIX:
-            case PROFILE::SEVEN:
-            case PROFILE::EIGHT:
-            case PROFILE::NINE:
-            case PROFILE::DEFAULT:
-            default:
-                qDebug()<<"useDefaultSecondary";
-                scene->setPenWidth(8);
-                scene->setPenColor(QColor(Qt::transparent));
-                break;
-        }
-    }
-    void useTertiary(){
-        updateStatusText("useTertiaryTool");
-        switch (t_profile) {
-            case PROFILE::ONE:
-            case PROFILE::TWO:
-            case PROFILE::THREE:
-            case PROFILE::FOUR:
-            case PROFILE::FIVE:
-            case PROFILE::SIX:
-            case PROFILE::SEVEN:
-            case PROFILE::EIGHT:
-            case PROFILE::NINE:
-            case PROFILE::DEFAULT:
-            default:
-                qDebug()<<"useDefaultTertiary";
-                break;
-        }
-    }
-private slots:
-    void open(){
-        QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"), QDir::currentPath());
-        if (!fileName.isEmpty()){
-            scene->loadImage(fileName);
-        }
-    }
-    void save(){
-        QAction *action = qobject_cast<QAction *>(sender());
-        QByteArray fileFormat = action->data().toByteArray();
-        saveFile(fileFormat);
-    }
-    void penColor(){
-        QColor newColor = QColorDialog::getColor(scene->getPenColor());
-        if (newColor.isValid())
-            scene->setPenColor(newColor);
-    }
-    void penWidth(){
-        bool ok;
-        int newWidth = QInputDialog::getInt(this,
-            tr("Scribble"),
-            tr("Select pen width:"),
-            scene->getPenWidth(),
-            1, 50, 1, &ok);
-        if (ok){
-            scene->setPenWidth(newWidth);
-        }
-    }
-    void updateStatusText(QString text){
-        statusText->setText(text);
-    }
-private:
-    Scene *scene;
-    QList<QAction *> saveAsActs;
-    QLabel *statusText;
-    QString createFileName(QString title,int frame,int layer,QString extension="png"){
-        return QString("%1-%2#%3.%4")
-            .arg(title)
-            .arg(frame,3,10,QChar('0'))
-            .arg(layer,2,10,QChar('0'))
-            .arg(extension);
-    }
-    void saveImage(Image img,QString path){
-        qDebug()<<"SaveImage:" << path;
-        if(!img.save(path,"PNG")){
-            QMessageBox::warning(this,
-                tr("Warning"),
-               tr("SequenceSaveWarning"),
-               QMessageBox::Ok);
-        }
-    }
-    QAction* createSequenceLoadAction(){
-        return Slib::createLambdaAction("SequenceLoad",[=]{
-            scene->initialize();
-            unsigned int frame=0,layer=0;
-            bool notfound=false;
-            QString filePath = QFileDialog::getOpenFileName(this,tr("Open File"),layerDir );
-            QRegExp reg("(^.+)/(.+)-(.+)#(.+).(.+)");
-            if(reg.exactMatch(filePath)){
-                reg.lastIndexIn(filePath);
-                QString dir=reg.cap(1);
-                QString name=reg.cap(2);
-                while(true){
-                    QString imgPath = dir+"/"+createFileName(name,frame,layer);
-                    qDebug()<< imgPath ;
-                    Image loadedImage;
-                    if (!loadedImage.load(imgPath)){
-                        if(notfound){
-                            //NotFound
-                            break;
-                        }
-                        notfound=true;
-                        frame++;
-                        layer=0;
-                    }else{
-                        if(frame > scene->getImages().size()-1){
-                            //qDebug()<<sequence<<scribbleArea->getImages().size();
-                            scene->addFrame();
-                        }
-                        scene->setFrameLayerImage(frame,layer,loadedImage);
-                        notfound=false;
-                        layer++;
-                    }
-                }
-                scene->createOnionSkin();
-                scene->update();
-            }else{
-                //Error
-            }
-            qDebug()<<"load complete";
-        });
-    }
-
-    QAction* createFrameSequenceSaveAction(){
-        return Slib::createLambdaAction("FrameSequenceSave",[=]{
-            vector < vector <Image>> images = scene->getImages();
-            for(int frame = 0; frame < (int) images.size(); ++frame) {
-                Image displayImage = scene->getFrameImage(frame);
-                QString imgPath = createFileName(scene->getTitle(),frame,0);
-                saveImage(displayImage,frameDir+imgPath);
-            }
-        });
-    }
-    QAction* createLayerSequenceSaveAction(){
-        return Slib::createLambdaAction("LayerSequenceSave",[=]{
-            vector < vector <Image>> images = scene->getImages();
-            for(int frame = 0; frame < (int) images.size(); ++frame) {
-                vector <Image> layers = images[frame];
-                for(int layer = 0; layer < (int) layers.size(); ++layer) {
-                    Image layerImg = layers[layer];
-                    QString imgPath = createFileName(scene->getTitle(),frame,layer);
-                    saveImage(layerImg,layerDir+imgPath);
-                }
-            }
-        });
-    }
-    QAction* createPublishAction(){
-        return Slib::createLambdaAction("Publish[white]",[=]{
-            vector < vector <Image>> images = scene->getImages();
-            for(int frame = 0; frame < (int) images.size(); ++frame) {
-                Image displayImage = scene->getDisplayImage(frame,Qt::white);
-                //
-                QPainter publishPainter(&displayImage);
-                QFont font;
-                font.setBold(true);
-                font.setPixelSize(24);
-                publishPainter.setFont(font);
-                publishPainter.setPen(QPen(Qt::gray));
-                publishPainter.drawText(10,30,"# Project:"+scene->getTitle());
-                //
-                saveImage(displayImage,cacheDir+QString("%1-%2.png").arg(scene->getTitle()).arg(frame,3,10,QChar('0')));
-            }
-        });
-    }
-    void createStatusBar(){
-        QStatusBar *statusbar = new QStatusBar(this);
-        statusText = new QLabel();
-        statusText->setAlignment(Qt::AlignRight);
-        statusbar->addWidget(statusText,1);
-        this->setStatusBar(statusbar);
-    }
-    bool saveFile(const QByteArray &fileFormat){
-        QString fileName = QFileDialog::getSaveFileName(this,
-            tr("Save As"),
-            cacheDir + "/"+scene->getTitle()+"."+fileFormat,
-            tr("%1 Files (*.%2);;All Files (*)")
-            .arg(QString::fromLatin1(fileFormat.toUpper()))
-            .arg(QString::fromLatin1(fileFormat)));
-        if (fileName.isEmpty()) {
-            return false;
-        } else {
-            return scene->saveImage(fileName, fileFormat.constData());
-        }
-    }
-    void createWidget(){
-        QDockWidget *pw = Slib::createDockWidget(tr("Preview"));
-        pw->setMaximumWidth(200);
-        pw->setMaximumHeight(130);
-        Preview* prev = new Preview();
-        pw->setWidget(prev);
-        addDockWidget(Qt::LeftDockWidgetArea,pw);
-        pw->hide();
-
-        QDockWidget *tw = Slib::createDockWidget(tr("Information"));
-        tw->setMaximumWidth(200);
-        tw->setMaximumHeight(200);
-        Info* info = new Info();
-        tw->setWidget(info);
-        addDockWidget(Qt::LeftDockWidgetArea,tw);
-        tw->hide();
-
-        QDockWidget *dw = Slib::createDockWidget(tr("Dock"));
-        dw->setMinimumWidth(200);
-        QVBoxLayout *dwvl = Slib::createVLayout();
-        dwvl->addStretch();
-        dwvl->addWidget(Slib::createTestButton());
-        dwvl->addWidget(
-            Slib::createSlotActionButton(
-                "ScribbleAreaTestAction",
-                scene,SLOT(test())
-            )
-        );
-        dwvl->addStretch();
-        dw->setWidget(Slib::createBoxWidget(dwvl));
-        addDockWidget(Qt::LeftDockWidgetArea,dw);
-        dw->hide();
-
-        QToolBar *toolBar =Slib::createToolBar(tr("Tool"));
-        toolBar->addAction(Slib::createLambdaIconAction(QIcon(":/rejif.png"),"ToolAction",[=]{
-            qDebug()<<"ToolFunction";
-        }));
-        addToolBar(Qt::RightToolBarArea,toolBar);
-        toolBar->hide();
-
-        QToolBar *quickBar =Slib::createToolBar(tr("Quick"));
-        quickBar->addAction(Slib::createLambdaIconAction(QIcon(":/rejif.png"),"ToolAction",[=]{
-            qDebug()<<"QuickFunction";
-        }));
-        addToolBar(Qt::TopToolBarArea,quickBar);
-        quickBar->hide();
-
-        QToolBar *lambdaBar =Slib::createToolBar(tr("LambdaBar"));
-        lambdaBar->addAction(Slib::createLambdaAction("InsertFrameAfter",[=]{
-            scene->insertFrameAfter();
-        }));
-        addToolBar(Qt::TopToolBarArea,lambdaBar);
-
-        QWidget *cw = new QWidget();
-        setCentralWidget(cw);
-        QHBoxLayout *hl = Slib::createHLayout();
-        cw->setLayout(hl);
-        QVBoxLayout *vl = Slib::createVLayout();
-        hl->addLayout(vl);
-        vl->addWidget(scene);
-        Monitor* director=new Monitor();
-        vl->addWidget(director);
-    }
-    void createMenus(){
+    void createMenus()override{
         //FileMenu
         QMenu *fileMenu = new QMenu(tr("&File"), this);
         QAction *openAct = new QAction(tr("&Open..."), this);
@@ -368,14 +67,14 @@ private:
             QStringList support;
             support << "JPEG" << "PNG" << "BMP";
             switch(support.indexOf(extension)){
-                case 0:
-                case 1:
-                case 2:
-                    QAction *action = new QAction(extension, this);
-                    action->setData(format);
-                    connect(action, SIGNAL(triggered()), this, SLOT(save()));
-                    saveAsActs.append(action);
-                    break;
+            case 0:
+            case 1:
+            case 2:
+                QAction *action = new QAction(extension, this);
+                action->setData(format);
+                connect(action, SIGNAL(triggered()), this, SLOT(save()));
+                saveAsActs.append(action);
+                break;
             }
         }
         fileMenu->addAction(openAct);
@@ -387,14 +86,14 @@ private:
         fileMenu->addMenu(saveAsMenu);
 
         fileMenu->addAction(Slib::createLambdaAction("QuietSave",[=]{
-                Image img = scene->getFrameImage(scene->getFrame());
-                QString imgPath = QString("%1_%2.%3")
+            Image img = scene->getFrameImage(scene->getFrame());
+            QString imgPath = QString("%1_%2.%3")
                     .arg(scene->getTitle())
                     .arg(Slib::getNow("yyyyMMdd_hhmmss"))
                     .arg("png");
-                saveImage(img,cacheDir+imgPath);
-            })
-        );
+            saveImage(img,cacheDir+imgPath);
+        })
+                            );
         fileMenu->addSeparator();
 
         QAction *exitAct = new QAction(tr("E&xit"), this);
@@ -586,10 +285,251 @@ private:
 
         menuBar()->addMenu(helpMenu);
     }
+    const QString cacheDir = Slib::mkdirp(QDir::currentPath()+"/cache/");
+    const QString frameDir = Slib::mkdirp(QDir::currentPath()+"/frame/");
+    const QString layerDir = Slib::mkdirp(QDir::currentPath()+"/layer/");
+    PROFILE t_profile = PROFILE::DEFAULT;
 protected:
     void closeEvent(QCloseEvent *event) override{
         event->accept();//->ignore();
     }
+public slots:
+    void useDefaultTool(){
+        updateStatusText("useProfile:Default");
+        t_profile=PROFILE::DEFAULT;
+        usePrimary();
+    }
+    void usePrimary(){
+        updateStatusText("usePrimaryTool");
+        switch (t_profile) {
+            case PROFILE::ONE:
+                scene->setPenWidth(2);
+                scene->setPenColor(QColor(0,0,0,255));
+                break;
+            case PROFILE::TWO:
+                scene->setPenWidth(5);
+                scene->setPenColor(QColor(191,191,191,255));
+                break;
+            case PROFILE::THREE:
+                scene->setPenWidth(20);
+                scene->setPenColor(QColor(191,191,191,255));
+                break;
+            case PROFILE::FOUR:
+                scene->setPenWidth(5);
+                scene->setPenColor(QColor(250,241,230,255));
+                break;
+            case PROFILE::FIVE:
+                scene->setPenWidth(5);
+                scene->setPenColor(QColor(54,46,43,255));
+                break;
+            case PROFILE::SIX:
+            case PROFILE::SEVEN:
+            case PROFILE::EIGHT:
+            case PROFILE::NINE:
+            case PROFILE::DEFAULT:
+            default:
+                qDebug()<<"DefaultPrimary";
+                scene->setPenWidth(1);
+                scene->setPenColor(Qt::black);
+                break;
+        }
+    }
+    void useSecondary(){
+        updateStatusText("useSecondaryTool");
+        switch (t_profile) {
+            case PROFILE::THREE:
+                scene->setPenWidth(16);
+                scene->setPenColor(QColor(Qt::transparent));
+                break;
+            case PROFILE::ONE:
+            case PROFILE::TWO:
+            case PROFILE::FOUR:
+            case PROFILE::FIVE:
+            case PROFILE::SIX:
+            case PROFILE::SEVEN:
+            case PROFILE::EIGHT:
+            case PROFILE::NINE:
+            case PROFILE::DEFAULT:
+            default:
+                qDebug()<<"useDefaultSecondary";
+                scene->setPenWidth(8);
+                scene->setPenColor(QColor(Qt::transparent));
+                break;
+        }
+    }
+    void useTertiary(){
+        updateStatusText("useTertiaryTool");
+        switch (t_profile) {
+            case PROFILE::ONE:
+            case PROFILE::TWO:
+            case PROFILE::THREE:
+            case PROFILE::FOUR:
+            case PROFILE::FIVE:
+            case PROFILE::SIX:
+            case PROFILE::SEVEN:
+            case PROFILE::EIGHT:
+            case PROFILE::NINE:
+            case PROFILE::DEFAULT:
+            default:
+                qDebug()<<"useDefaultTertiary";
+                break;
+        }
+    }
+private slots:
+    void open(){
+        QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"), QDir::currentPath());
+        if (!fileName.isEmpty()){
+            scene->loadImage(fileName);
+        }
+    }
+    void save(){
+        QAction *action = qobject_cast<QAction *>(sender());
+        QByteArray fileFormat = action->data().toByteArray();
+        saveFile(fileFormat);
+    }
+    void penColor(){
+        QColor newColor = QColorDialog::getColor(scene->getPenColor());
+        if (newColor.isValid())
+            scene->setPenColor(newColor);
+    }
+    void penWidth(){
+        bool ok;
+        int newWidth = QInputDialog::getInt(this,
+            tr("Scribble"),
+            tr("Select pen width:"),
+            scene->getPenWidth(),
+            1, 50, 1, &ok);
+        if (ok){
+            scene->setPenWidth(newWidth);
+        }
+    }
+    void updateStatusText(QString text){
+        statusText->setText(text);
+    }
+private:
+    Scene *scene;
+    QList<QAction *> saveAsActs;
+    QLabel *statusText;
+
+    QString createFileName(QString title,int frame,int layer,QString extension="png"){
+        return QString("%1-%2#%3.%4")
+            .arg(title)
+            .arg(frame,3,10,QChar('0'))
+            .arg(layer,2,10,QChar('0'))
+            .arg(extension);
+    }
+    void saveImage(Image img,QString path){
+        qDebug()<<"SaveImage:" << path;
+        if(!img.save(path,"PNG")){
+            QMessageBox::warning(this,
+                tr("Warning"),
+               tr("SequenceSaveWarning"),
+               QMessageBox::Ok);
+        }
+    }
+    QAction* createSequenceLoadAction(){
+        return Slib::createLambdaAction("SequenceLoad",[=]{
+            scene->initialize();
+            unsigned int frame=0,layer=0;
+            bool notfound=false;
+            QString filePath = QFileDialog::getOpenFileName(this,tr("Open File"),layerDir );
+            QRegExp reg("(^.+)/(.+)-(.+)#(.+).(.+)");
+            if(reg.exactMatch(filePath)){
+                reg.lastIndexIn(filePath);
+                QString dir=reg.cap(1);
+                QString name=reg.cap(2);
+                while(true){
+                    QString imgPath = dir+"/"+createFileName(name,frame,layer);
+                    qDebug()<< imgPath ;
+                    Image loadedImage;
+                    if (!loadedImage.load(imgPath)){
+                        if(notfound){
+                            //NotFound
+                            break;
+                        }
+                        notfound=true;
+                        frame++;
+                        layer=0;
+                    }else{
+                        if(frame > scene->getImages().size()-1){
+                            //qDebug()<<sequence<<scribbleArea->getImages().size();
+                            scene->addFrame();
+                        }
+                        scene->setFrameLayerImage(frame,layer,loadedImage);
+                        notfound=false;
+                        layer++;
+                    }
+                }
+                scene->createOnionSkin();
+                scene->update();
+            }else{
+                //Error
+            }
+            qDebug()<<"load complete";
+        });
+    }
+    QAction* createFrameSequenceSaveAction(){
+        return Slib::createLambdaAction("FrameSequenceSave",[=]{
+            vector < vector <Image>> images = scene->getImages();
+            for(int frame = 0; frame < (int) images.size(); ++frame) {
+                Image displayImage = scene->getFrameImage(frame);
+                QString imgPath = createFileName(scene->getTitle(),frame,0);
+                saveImage(displayImage,frameDir+imgPath);
+            }
+        });
+    }
+    QAction* createLayerSequenceSaveAction(){
+        return Slib::createLambdaAction("LayerSequenceSave",[=]{
+            vector < vector <Image>> images = scene->getImages();
+            for(int frame = 0; frame < (int) images.size(); ++frame) {
+                vector <Image> layers = images[frame];
+                for(int layer = 0; layer < (int) layers.size(); ++layer) {
+                    Image layerImg = layers[layer];
+                    QString imgPath = createFileName(scene->getTitle(),frame,layer);
+                    saveImage(layerImg,layerDir+imgPath);
+                }
+            }
+        });
+    }
+    QAction* createPublishAction(){
+        return Slib::createLambdaAction("Publish[white]",[=]{
+            vector < vector <Image>> images = scene->getImages();
+            for(int frame = 0; frame < (int) images.size(); ++frame) {
+                Image displayImage = scene->getDisplayImage(frame,Qt::white);
+                //
+                QPainter publishPainter(&displayImage);
+                QFont font;
+                font.setBold(true);
+                font.setPixelSize(24);
+                publishPainter.setFont(font);
+                publishPainter.setPen(QPen(Qt::gray));
+                publishPainter.drawText(10,30,"# Project:"+scene->getTitle());
+                //
+                saveImage(displayImage,cacheDir+QString("%1-%2.png").arg(scene->getTitle()).arg(frame,3,10,QChar('0')));
+            }
+        });
+    }
+    void createStatusBar(){
+        QStatusBar *statusbar = new QStatusBar(this);
+        statusText = new QLabel();
+        statusText->setAlignment(Qt::AlignRight);
+        statusbar->addWidget(statusText,1);
+        this->setStatusBar(statusbar);
+    }
+    bool saveFile(const QByteArray &fileFormat){
+        QString fileName = QFileDialog::getSaveFileName(this,
+            tr("Save As"),
+            cacheDir + "/"+scene->getTitle()+"."+fileFormat,
+            tr("%1 Files (*.%2);;All Files (*)")
+            .arg(QString::fromLatin1(fileFormat.toUpper()))
+            .arg(QString::fromLatin1(fileFormat)));
+        if (fileName.isEmpty()) {
+            return false;
+        } else {
+            return scene->saveImage(fileName, fileFormat.constData());
+        }
+    }
+    void createWidget();
 };
 
 #endif // MWINDOW_H
